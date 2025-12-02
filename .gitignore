@@ -1,0 +1,19 @@
+# Node
+node_modules/
+frontend/dist/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# SQLite
+*.db
+backend/db/*.db
+
+# IDE
+.vscode/
+.idea/
+
+# ffmpeg
+rdp-monitor/ffmpeg/*
