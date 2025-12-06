@@ -1,7 +1,17 @@
 import sqlite3
 
-conn = sqlite3.connect("rdp.db")
+DB_PATH = "rdp.db"
+
+conn = sqlite3.connect(DB_PATH)
 cur = conn.cursor()
+
+cur.execute("""
+CREATE TABLE IF NOT EXISTS rdp_server (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE,
+    ip TEXT
+)
+""")
 
 cur.execute("""
 CREATE TABLE IF NOT EXISTS rdp_video (
@@ -20,3 +30,5 @@ CREATE TABLE IF NOT EXISTS rdp_video (
 
 conn.commit()
 conn.close()
+
+print("[INFO] Database initialized successfully.")

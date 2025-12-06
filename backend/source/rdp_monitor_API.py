@@ -4,6 +4,13 @@ from modules import rdpDB_query
 
 rdp_monitor_api = Blueprint('rdp_monitor_api', __name__)
 
+@rdp_monitor_api.route("/servers", methods=["GET"])
+def get_servers():
+    rows = rdpDB_query("""
+        SELECT name
+        FROM rdp_server
+    """)
+    return jsonify(rows)
 
 @rdp_monitor_api.route("/metadata", methods=["POST"])
 def metadata():
