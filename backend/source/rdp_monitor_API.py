@@ -39,13 +39,10 @@ def get_dates():
     server = request.args.get("server")
 
     rows = rdpDB_query("""
-        SELECT DISTINCT date
-        FROM rdp_video
-        WHERE server_name=?
-        ORDER BY date DESC
+        SELECT DISTINCT date FROM rdp_video WHERE server_name=? ORDER BY date DESC
     """, (server,))
 
-    dates = [r[0] for r in rows]
+    dates = [r['date'] for r in rows]
     return jsonify(dates)
 
 @rdp_monitor_api.route("/list", methods=["GET"])
@@ -64,7 +61,8 @@ def get_list():
 
 @rdp_monitor_api.route("/video/<path:filepath>")
 def serve_video(filepath):
-    full_path = f"../data/rdp-video/{filepath}"
+    full_path = f"C:/Users/user/Desktop/rdp-video-pjt/rdp_monitor/record_test/{filepath}"
+    print(full_path)
     if not os.path.exists(full_path):
         return jsonify({"error": "file not found"}), 404
 
