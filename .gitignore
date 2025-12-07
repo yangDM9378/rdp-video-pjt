@@ -1,11 +1,11 @@
 # Node
 node_modules/
-frontend/dist/
+dist/
 
 # Python
 __pycache__/
 *.pyc
-venv/
+backend/venv/
 
 # SQLite
 *.db
@@ -16,4 +16,4 @@ backend/db/*.db
 .idea/
 
 # ffmpeg
-rdp-monitor/ffmpeg/*
+ffmpeg/
