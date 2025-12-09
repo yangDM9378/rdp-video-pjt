@@ -3,9 +3,9 @@ param(
 )
 
 # === Path Settings ===
-$Ffmpeg     = "C:\Users\cococ\Desktop\rdp-video-pjt\rdp_monitor\ffmpeg\bin\ffmpeg.exe"
-$OutDir     = "C:\Users\cococ\Desktop\rdp-video-pjt\rdp_monitor\record_test"
-$BasePidDir = "C:\Users\cococ\Desktop\rdp-video-pjt\rdp_monitor\pids"
+$Ffmpeg     = "C:\rdp-video-pjt\rdp_monitor\ffmpeg\bin\ffmpeg.exe"
+$OutDir     = "C:\rdp-video-pjt\rdp_monitor\record_test"
+$BasePidDir = "C:\rdp-video-pjt\rdp_monitor\pids"
 
 # === Current Username ===
 $UserName = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name.Split('\')[-1]

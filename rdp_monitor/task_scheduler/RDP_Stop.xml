@@ -32,7 +32,7 @@
   <Actions Context="Author">
     <Exec>
       <Command>C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</Command>
-      <Arguments>-ExecutionPolicy Bypass -NoProfile -File "C:\rdp_monitor\scripts\rdp_stop_log.ps1"</Arguments>
+      <Arguments>-ExecutionPolicy Bypass -NoProfile -File "C:\rdp-video-pjt\rdp_monitor\scripts\rdp_stop_log.ps1"</Arguments>
       <WorkingDirectory>C:\rdp_monitor\scripts</WorkingDirectory>
     </Exec>
   </Actions>

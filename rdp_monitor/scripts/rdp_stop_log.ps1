@@ -3,7 +3,7 @@
 #=========================================
 
 # 공통 설정 로딩
-. "C:\rdp_monitor\scripts\config_loader.ps1"
+. "C:\rdp-video-pjt\scripts\config_loader.ps1"
 $config = Load-Config
 
 # 로그 위치

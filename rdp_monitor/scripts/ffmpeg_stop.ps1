@@ -1,7 +1,7 @@
 # This script is intended to be executed upon RDP disconnect or logoff events.
 
 # === Path Configuration ===
-$BasePidDir = "C:\Users\cococ\Desktop\rdp-video-pjt\rdp_monitor\pids"
+$BasePidDir = "C:\rdp-video-pjt\rdp_monitor\pids"
 
 # 1. Get current username and define user-specific PID folder
 $UserName = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name.Split('\')[-1]
