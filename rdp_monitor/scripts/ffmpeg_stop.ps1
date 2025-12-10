@@ -37,8 +37,18 @@ foreach ($file in $PidFiles) {
     
     # 5. Attempt process termination (주석 해제)
     try {
-        Stop-Process -Id $TargetPid -Force -ErrorAction Stop
-        Write-Host "   Process $TargetPid terminated successfully."
+        # /F (Force)를 사용하지 않고 먼저 시도하여 정상 종료 유도
+        cmd /c taskkill /PID $TargetPid
+        
+        Start-Sleep -Seconds 3
+        
+        Write-Host "   Sent gracefu termination signal to $TargetPid."
+        
+        # 2초 후에도 남아있다면 강제 종료 (FFmpeg가 종료되지 않는 비정상적인 경우 대비)
+        if (Get-Process -Id $TargetPid -ErrorAction SilentlyContinue) {
+            Stop-Process -Id $TargetPid -Force -ErrorAction Stop
+            Write-Host "   Process $TargetPid force terminated."
+        }
     }
     catch {
         # Catch failure if process is already gone or access is denied

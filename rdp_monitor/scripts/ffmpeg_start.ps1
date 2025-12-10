@@ -3,13 +3,13 @@ param(
 )
 
 # === Path Settings ===
-$Ffmpeg     = "C:\rdp-video-pjt\rdp_monitor\ffmpeg\bin\ffmpeg.exe"
-$OutDir     = "C:\rdp-video-pjt\rdp_monitor\record_test"
+$Ffmpeg = "C:\rdp-video-pjt\rdp_monitor\ffmpeg\bin\ffmpeg.exe"
+$OutDir = "C:\rdp-video-pjt\rdp_monitor\record_test"
 $BasePidDir = "C:\rdp-video-pjt\rdp_monitor\pids"
 
 # === Current Username ===
 $UserName = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name.Split('\')[-1]
-$PidDir   = "$BasePidDir\$UserName"
+$PidDir = "$BasePidDir\$UserName"
 
 # === Create directories if missing ===
 @( $OutDir, $BasePidDir, $PidDir ) | ForEach-Object {
@@ -22,7 +22,7 @@ if ([string]::IsNullOrWhiteSpace($Timestamp)) {
 }
 
 # === Output video filename ===
-$FileName   = "record_$Timestamp.webm"
+$FileName = "record_$Timestamp.webm"
 $OutputFile = "$OutDir\$FileName"
 
 # === FFmpeg Arguments ===
