@@ -1,7 +1,6 @@
 . "C:\rdp-video-pjt\rdp_monitor\scripts\common.ps1"
 $config = Get-Config
 
-<<<<<<< HEAD
 $Ffmpeg    = $config["FFMPEG_PATH"]
 $RecordDir = $config["RECORD_DIR"]
 $PidDir    = $config["PID_DIR"]
@@ -13,20 +12,6 @@ try {
 }
 catch {
     exit
-=======
-# === Path Settings ===
-$Ffmpeg = "C:\rdp-video-pjt\rdp_monitor\ffmpeg\bin\ffmpeg.exe"
-$OutDir = "C:\rdp-video-pjt\rdp_monitor\record_test"
-$BasePidDir = "C:\rdp-video-pjt\rdp_monitor\pids"
-
-# === Current Username ===
-$UserName = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name.Split('\')[-1]
-$PidDir = "$BasePidDir\$UserName"
-
-# === Create directories if missing ===
-@( $OutDir, $BasePidDir, $PidDir ) | ForEach-Object {
-    if (!(Test-Path $_)) { New-Item -ItemType Directory -Path $_ | Out-Null }
->>>>>>> 574897fd1cddf29f25566f23c897fb1568539c5b
 }
 
 $SessionDir = "$PidDir\session_$SessionId"
@@ -75,13 +60,7 @@ $meta = @{
     uploaded   = 0
 }
 
-<<<<<<< HEAD
 $meta | ConvertTo-Json -Depth 5 | Out-File $MetaPath -Encoding utf8
-=======
-# === Output video filename ===
-$FileName = "record_$Timestamp.webm"
-$OutputFile = "$OutDir\$FileName"
->>>>>>> 574897fd1cddf29f25566f23c897fb1568539c5b
 
 # ===== recording.json (세션 포인터) =====
 @{
