@@ -1,5 +1,6 @@
-BASE_DIR=C:\rdp_monitor
-LOG_DIR=C:\rdp_monitor\logs
-PID_DIR=C:\rdp_monitor\pids
-RECORD_DIR=C:\rdp_monitor\recordings
-FFMPEG_PATH=C:\rdp_monitor\ffmpeg\ffmpeg.exe
+BASE_DIR=C:\rdp-video-pjt\rdp_monitor
+LOG_DIR=C:\rdp-video-pjt\rdp_monitor\logs
+PID_DIR=C:\rdp-video-pjt\rdp_monitor\pids
+RECORD_DIR=C:\rdp-video-pjt\rdp_monitor\recordings
+FLAG_DIR=C:\rdp-video-pjt\rdp_monitor\flags
+FFMPEG_PATH=C:\rdp-video-pjt\rdp_monitor\ffmpeg\bin\ffmpeg.exe
