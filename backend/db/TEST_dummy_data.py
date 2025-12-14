@@ -9,12 +9,11 @@ cur = conn.cursor()
 
 print("[INFO] Inserting TEST dummy data...")
 
+# ===== 서버 3개 =====
 servers = [
-    ("test_server1", "127.0.0.1"),
-    ("test_server2", "10.0.0.12"),
-    ("test_server3", "127.0.0.1"),
-    ("test_server4", "10.0.0.14"),
-    ("test_server5", "10.0.0.15")
+    ("TEST1", "127.0.0.1"),
+    ("TEST2", "10.0.0.12"),
+    ("TEST3", "10.0.0.13"),
 ]
 
 cur.executemany("""
@@ -24,49 +23,60 @@ VALUES (?, ?)
 
 conn.commit()
 
-base_users = ["admin", "tester", "operator", "guest"]
+users = ["admin", "tester", "operator", "guest"]
 
 today = datetime.now()
 test_rows = []
 
 for server_name, _ in servers:
-
-    for d in range(7):
+    for d in range(7):  # 최근 7일
         date_obj = today - timedelta(days=d)
-        date_str = date_obj.strftime("%Y%m%d")
+        date_dir = date_obj.strftime("%Y%m%d")
+        date_db  = date_obj.strftime("%Y-%m-%d")
 
-        file_count = random.randint(3, 4)
+        file_count = random.randint(3, 5)
 
         for i in range(file_count):
-            user = random.choice(base_users)
-            session = f"0x{random.randint(10000,99999)}"
-            time_str = f"{random.randint(0,23):02d}{random.randint(0,59):02d}{random.randint(0,59):02d}"
+            user = random.choice(users)
+            session = str(random.randint(1, 50))
 
-            filename = f"{user}_{date_str}{time_str}{i}.webm"
-            filepath = f"{date_str}/{user}/{filename}"
+            start_dt = date_obj.replace(
+                hour=random.randint(0, 23),
+                minute=random.randint(0, 59),
+                second=random.randint(0, 59)
+            )
 
-            uploaded = random.randint(0, 1)
+            end_dt = start_dt + timedelta(minutes=random.randint(1, 15))
+
+            filename = start_dt.strftime("%Y%m%d%H%M%S") + f"_session{session}.webm"
+
+            filepath = f"{server_name}/{date_dir}/{user}/{filename}"
+
+            uploaded = random.choice([0, 1])
 
             upload_time = None
             if uploaded == 1:
-                upload_time = (date_obj + timedelta(minutes=random.randint(1,10))).strftime("%Y%m%d%H%M%S")
+                upload_time = (end_dt + timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M:%S")
 
             test_rows.append((
                 server_name,
                 user,
                 session,
-                date_str,
+                date_db,
                 filename,
                 filepath,
                 uploaded,
-                time_str,
+                start_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                end_dt.strftime("%Y-%m-%d %H:%M:%S"),
                 upload_time
             ))
 
 cur.executemany("""
 INSERT INTO rdp_video
-(server_name, user, session, date, filename, filepath, uploaded, time, upload_time)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+(server_name, user, session, date,
+ filename, filepath, uploaded,
+ time, end_time, upload_time)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """, test_rows)
 
 conn.commit()

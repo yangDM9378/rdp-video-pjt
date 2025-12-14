@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, send_file
-import os
+import os, re
+from datetime import datetime
 from modules import rdpDB_query
 
 rdp_monitor_api = Blueprint('rdp_monitor_api', __name__)
@@ -12,26 +13,60 @@ def get_servers():
     """)
     return jsonify(rows)
 
+
+from flask import request, jsonify
+from datetime import datetime
+
 @rdp_monitor_api.route("/metadata", methods=["POST"])
 def metadata():
     data = request.json
+    filepath   = data.get("filepath")
+    server     = data.get("server")
+    user       = data.get("user")
+    session    = data.get("session")
+    filename   = data.get("filename")
+    start_time = data.get("start_time")
+    end_time   = data.get("end_time")
+    uploaded   = data.get("uploaded")
+
+    # 운영 서버 경로로 저장
+    op_path = None
+
+    if filepath:
+        norm = filepath.replace("\\", "/")
+        if "/record/" in norm:
+            sub = norm.split("/record/")[1]
+            op_path = f"{server}/{sub}/{filename}"
+
+    if start_time:
+        time_val = start_time
+        date_val = start_time.split(" ")[0]
+    else:
+        time_val = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        date_val = time_val.split(" ")[0]
+
+    uploaded    = 0
+    upload_time = None
 
     rdpDB_query("""
     INSERT INTO rdp_video
-    (server_name, user, session, date, filename, filepath, uploaded, time)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    (server_name, user, session, date, filename, filepath,
+     uploaded, time, end_time, upload_time)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        data["server"],
-        data["user"],
-        data["session"],
-        data["date"],
-        data["filename"],
-        data["filepath"],
-        data.get("uploaded", 0),
-        data["time"]
+        server,
+        user,
+        session,
+        date_val,
+        filename,
+        op_path,
+        uploaded,
+        time_val,
+        end_time,
+        upload_time
     ))
 
-    return jsonify({"result":"ok"})
+    return jsonify({"result": "ok"})
 
 
 @rdp_monitor_api.route("/dates", methods=["GET"])
@@ -61,8 +96,7 @@ def get_list():
 
 @rdp_monitor_api.route("/video/<path:filepath>")
 def serve_video(filepath):
-    full_path = f"C:/Users/user/Desktop/rdp-video-pjt/rdp_monitor/record_test/{filepath}"
-    print(full_path)
+    full_path = f"C:/Users/user/Desktop/rdp-video-pjt/rdp_monitor/record/{filepath}"
     if not os.path.exists(full_path):
         return jsonify({"error": "file not found"}), 404
 

@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS rdp_video (
     filepath TEXT,
     uploaded INTEGER,
     time TEXT,
+    end_time TEXT,
     upload_time TEXT
 )
 """)
