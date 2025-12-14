@@ -1,6 +1,8 @@
+SERVER_NAME=TEST1
 BASE_DIR=C:\rdp-video-pjt\rdp_monitor
 LOG_DIR=C:\rdp-video-pjt\rdp_monitor\logs
 PID_DIR=C:\rdp-video-pjt\rdp_monitor\pids
-RECORD_DIR=C:\rdp-video-pjt\rdp_monitor\recordings
+RECORD_DIR=C:\rdp-video-pjt\rdp_monitor\record
 FLAG_DIR=C:\rdp-video-pjt\rdp_monitor\flags
 FFMPEG_PATH=C:\rdp-video-pjt\rdp_monitor\ffmpeg\bin\ffmpeg.exe
+METADATA_API_URL=http://localhost:5001/rdp/metadata
