@@ -62,9 +62,24 @@ try {
 
     # ===== send meta to backend (실패해도 throw 안 함) =====
     try {
+<<<<<<< HEAD
         Send-MetaToApi `
             -MetaFile $MetaFile `
             -LogDir $LogDir | Out-Null
+=======
+        # /F (Force)를 사용하지 않고 먼저 시도하여 정상 종료 유도
+        cmd /c taskkill /PID $TargetPid
+        
+        Start-Sleep -Seconds 3
+        
+        Write-Host "   Sent gracefu termination signal to $TargetPid."
+        
+        # 2초 후에도 남아있다면 강제 종료 (FFmpeg가 종료되지 않는 비정상적인 경우 대비)
+        if (Get-Process -Id $TargetPid -ErrorAction SilentlyContinue) {
+            Stop-Process -Id $TargetPid -Force -ErrorAction Stop
+            Write-Host "   Process $TargetPid force terminated."
+        }
+>>>>>>> 574897fd1cddf29f25566f23c897fb1568539c5b
     }
     catch {
         # 여기서는 로그만 남기고 절대 throw 하지 않음
