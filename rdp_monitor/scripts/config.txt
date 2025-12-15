@@ -6,3 +6,10 @@ RECORD_DIR=C:\rdp-video-pjt\rdp_monitor\record
 FLAG_DIR=C:\rdp-video-pjt\rdp_monitor\flags
 FFMPEG_PATH=C:\rdp-video-pjt\rdp_monitor\ffmpeg\bin\ffmpeg.exe
 METADATA_API_URL=http://localhost:5001/rdp/metadata
+MOVE_RECORD_DIR=C:\var\lib\data_platform\rdp_monitor\record
+SFTP_HOST=localhost
+SFTP_USER=user
+SFTP_KEY=password
+WINSCP_PATH=C:\rdp-video-pjt\rdp_monitor\winscp\WinSCP.com
+
+

@@ -13,10 +13,6 @@ def get_servers():
     """)
     return jsonify(rows)
 
-
-from flask import request, jsonify
-from datetime import datetime
-
 @rdp_monitor_api.route("/metadata", methods=["POST"])
 def metadata():
     data = request.json
