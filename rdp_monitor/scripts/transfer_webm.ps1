@@ -1,62 +1,134 @@
 . "C:\rdp-video-pjt\rdp_monitor\scripts\common.ps1"
 $config = Get-Config
 
-$RecordDir   = $config["RECORD_DIR"]
-$MoveRootDir = $config["MOVE_RECORD_DIR"]
-$ServerName  = $config["SERVER_NAME"]
-$LogDir      = $config["LOG_DIR"]
+$RecordDir = $config["RECORD_DIR"]
+$MoveRootDir = $config["MOVE_RECORD_DIR"]   # chroot 기준 상대 경로
+$ServerName = $config["SERVER_NAME"]
+$LogDir = $config["LOG_DIR"]
 
-$WinSCP   = $config["WINSCP_PATH"]
 $SftpHost = $config["SFTP_HOST"]
 $SftpUser = $config["SFTP_USER"]
-$SftpPass = $config["SFTP_KEY"]
+$SftpKey = $config["SFTP_KEY"]
 
-$Yesterday = (Get-Date).AddDays(-1).ToString("yyyyMMdd")
-
-$LocalDir  = Join-Path $RecordDir $Yesterday
-$RemoteDir = Join-Path $MoveRootDir $ServerName
-$RemoteDir = Join-Path $RemoteDir  $Yesterday
+$Today = Get-Date -Format "yyyyMMdd"
 
 if (!(Test-Path $LogDir)) {
     New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 }
 
-$LogFile = Join-Path $LogDir "transfer_${ServerName}_${Yesterday}.log"
+$LogFile = Join-Path $LogDir "transfer_${ServerName}.log"
 
 function Log($msg) {
     $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     "$ts $msg" | Out-File $LogFile -Append -Encoding utf8
 }
 
-Log "===== SFTP TRANSFER START ====="
-Log "LocalDir  = $LocalDir"
-Log "RemoteDir = $RemoteDir"
+Log "===== TRANSFER START ====="
 
+$DateDirs = Get-ChildItem $RecordDir -Directory |
+Where-Object {
+    $_.Name -match '^\d{8}$' -and $_.Name -lt $Today
+} |
+Sort-Object Name
 
-if (!(Test-Path $LocalDir)) {
-    Log "Local directory not found. Exit."
-    exit 0
-}
+foreach ($dateDir in $DateDirs) {
 
-$WinScpScript = @"
-open sftp://$SftpUser@$SftpHost -password="$SftpPass"
-mkdir $RemoteDir
-cd $RemoteDir
-lcd $LocalDir
-put -resume -delete -r *
-exit
+    $Date = $dateDir.Name
+    Log "---- Date folder: $Date ----"
+
+    $RemoteDateDir = "$MoveRootDir/$ServerName/$Date"
+
+    $InitCmd = @"
+mkdir $MoveRootDir
+mkdir $MoveRootDir/$ServerName
+mkdir $RemoteDateDir
+bye
 "@
 
-$tmpScript = "$env:TEMP\winscp_${ServerName}_${Yesterday}.txt"
-$WinScpScript | Out-File $tmpScript -Encoding ascii
+    $InitScript = "$env:TEMP\sftp_init_${ServerName}_${Date}.txt"
+    $InitCmd | Out-File $InitScript -Encoding ascii
 
-& $WinSCP /script="$tmpScript" /log="$LogDir\winscp_${ServerName}_${Yesterday}.log"
+    sftp -i "$SftpKey" -b "$InitScript" "$SftpUser@$SftpHost" | Out-Null
+    Remove-Item $InitScript -Force -ErrorAction SilentlyContinue
 
-if ($LASTEXITCODE -eq 0) {
-    Log "SFTP TRANSFER SUCCESS"
-} else {
-    Log "SFTP TRANSFER FAILED (code=$LASTEXITCODE)"
+    $UserDirs = Get-ChildItem $dateDir.FullName -Directory
+
+    foreach ($userDir in $UserDirs) {
+
+        $RemoteUserDir = "$RemoteDateDir/$($userDir.Name)"
+
+        $UserInitCmd = @"
+mkdir $RemoteUserDir
+bye
+"@
+
+        $UserInitScript = "$env:TEMP\sftp_user_${ServerName}_${Date}_$($userDir.Name).txt"
+        $UserInitCmd | Out-File $UserInitScript -Encoding ascii
+
+        sftp -i "$SftpKey" -b "$UserInitScript" "$SftpUser@$SftpHost" | Out-Null
+        Remove-Item $UserInitScript -Force -ErrorAction SilentlyContinue
+
+        $WebmFiles = Get-ChildItem $userDir.FullName -Filter *.webm
+
+        foreach ($webm in $WebmFiles) {
+
+            $webmPath = $webm.FullName
+            $jsonPath = [System.IO.Path]::ChangeExtension($webmPath, ".json")
+
+            # 0바이트 파일 제거
+            if ((Get-Item $webmPath).Length -eq 0) {
+
+                Remove-Item $webmPath -Force
+                Log "[CLEANUP] removed 0-byte webm: $($webm.Name)"
+
+                if (Test-Path $jsonPath) {
+                    Remove-Item $jsonPath -Force
+                    Log "[CLEANUP] removed related json: $(Split-Path $jsonPath -Leaf)"
+                }
+                continue
+            }
+            $SftpCmd = @"
+cd $RemoteUserDir
+put "$webmPath"
+$(if (Test-Path $jsonPath) { "put `"$jsonPath`"" })
+bye
+"@
+
+            $TmpScript = "$env:TEMP\sftp_put_${ServerName}_${Date}_$($webm.BaseName).txt"
+            $SftpCmd | Out-File $TmpScript -Encoding ascii
+
+            sftp -i "$SftpKey" -b "$TmpScript" "$SftpUser@$SftpHost"
+            $ExitCode = $LASTEXITCODE
+
+            Remove-Item $TmpScript -Force -ErrorAction SilentlyContinue
+
+            if ($ExitCode -eq 0) {
+
+                Remove-Item $webmPath -Force
+                Log "[OK] transferred & removed: $($webm.Name)"
+
+                if (Test-Path $jsonPath) {
+                    Remove-Item $jsonPath -Force
+                    Log "[OK] removed json: $(Split-Path $jsonPath -Leaf)"
+                }
+
+            }
+            else {
+                Log "[FAIL] transfer failed: $($webm.Name)"
+                continue
+            }
+
+            if ((Get-ChildItem $userDir.FullName -Force).Count -eq 0) {
+                Remove-Item $userDir.FullName -Force
+                Log "[CLEANUP] removed empty user dir: $($userDir.Name)"
+            }
+        }
+    }
+
+    if ((Get-ChildItem $dateDir.FullName -Directory -Force).Count -eq 0) {
+        Remove-Item $dateDir.FullName -Force
+        Log "[CLEANUP] removed empty date dir: $Date"
+    }
 }
 
-Remove-Item $tmpScript -Force -ErrorAction SilentlyContinue
-Log "===== SFTP TRANSFER END ====="
+Log "===== TRANSFER END ====="
