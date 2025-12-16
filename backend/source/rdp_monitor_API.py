@@ -1,5 +1,5 @@
-from flask import Blueprint, request, jsonify, send_file
-import os, re
+from flask import Blueprint, request, jsonify, send_file, Response, stream_with_context
+import os
 from datetime import datetime
 from modules import rdpDB_query
 
@@ -90,12 +90,82 @@ def get_list():
 
     return jsonify(rows)
 
-@rdp_monitor_api.route("/video/<path:filepath>")
-def serve_video(filepath):
-    full_path = f"C:/Users/user/Desktop/rdp-video-pjt/rdp_monitor/record/{filepath}"
+@rdp_monitor_api.route("/video/stream/<int:video_id>")
+def stream_today_video(video_id):
+    rows = rdpDB_query("""
+        SELECT
+            v.server_name,
+            s.ip AS server_ip,
+            v.date,
+            v.filename,
+            v.uploaded
+        FROM rdp_video v
+        JOIN rdp_server s
+          ON v.server_name = s.name
+        WHERE v.id = ?
+    """, (video_id,))
+
+    if not rows:
+        return jsonify({"error": "not found"}), 404
+
+    video = rows[0]
+
+    if video["uploaded"] != 0:
+        return jsonify({"error": "invalid request"}), 400
+
+    server_ip = video["server_ip"]
+    filename  = video["filename"]
+
+    raw_date = video["date"]
+    date = raw_date.replace("-", "")
+
+    windows_stream_url = (
+        f"http://{server_ip}:8080/stream"
+        f"?file={filename}&date={date}"
+    )
+
+    try:
+        r = requests.get(windows_stream_url, stream=True, timeout=5)
+    except Exception:
+        return jsonify({"error": "windows server unreachable"}), 502
+
+    if r.status_code != 200:
+        return jsonify({"error": "stream failed"}), 502
+
+    def generate():
+        for chunk in r.iter_content(chunk_size=8192):
+            if chunk:
+                yield chunk
+
+    return Response(
+        stream_with_context(generate()),
+        content_type="video/webm"
+    )
+
+@rdp_monitor_api.route("/video/play/<int:video_id>")
+def play_uploaded_video(video_id):
+    rows = rdpDB_query("""
+        SELECT filepath, uploaded
+        FROM rdp_video
+        WHERE id=?
+    """, (video_id,))
+
+    if not rows:
+        return jsonify({"error": "not found"}), 404
+
+    video = rows[0]
+
+    if video["uploaded"] != 1:
+        return jsonify({"error": "invalid request"}), 400
+
+    base_dir = "C:/var/lib/data_platform/rdp_monitor/record"
+    full_path = os.path.normpath(os.path.join(base_dir, video["filepath"]))
+
+    # 🔒 base_dir 탈출 방지
+    if not full_path.startswith(os.path.abspath(base_dir)):
+        return jsonify({"error": "invalid path"}), 403
+
     if not os.path.exists(full_path):
         return jsonify({"error": "file not found"}), 404
 
-    return send_file(full_path)
-
-
+    return send_file(full_path, mimetype="video/webm")
