@@ -17,3 +17,15 @@ backend/db/*.db
 
 # ffmpeg
 ffmpeg/
+
+#winscp
+winscp/
+
+# rdp file
+rdp_monitor/record
+rdp_monitor/logs
+rdp_monitor/pids
+
+
+#ssh key
+/ssh-keys
