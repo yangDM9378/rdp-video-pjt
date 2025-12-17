@@ -10,7 +10,9 @@ export default function DateSelect({ dates, onSelect }: Props) {
       <select onChange={(e) => onSelect(e.target.value)}>
         <option value="">선택하세요</option>
         {dates.map((d) => (
-          <option key={d}>{d}</option>
+          <option key={d} value={d}>
+            {d}
+          </option>
         ))}
       </select>
     </div>

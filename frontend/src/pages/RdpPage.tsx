@@ -20,22 +20,29 @@ export default function RdpPage() {
   const handleServer = (serverName: string) => {
     setSelectedServer(serverName);
     setSelectedFile(null);
+    setFiles([]);
     fetchDates(serverName).then(setDates);
   };
 
   const handleDate = (date: string) => {
+    setSelectedFile(null);
     fetchFileList(selectedServer, date).then(setFiles);
   };
 
   return (
-    <div style={{ padding: 20 }}>
+    <div>
       <h2>RDP 영상 재생</h2>
 
       <ServerSelect servers={servers} onSelect={handleServer} />
       <DateSelect dates={dates} onSelect={handleDate} />
       <FileList files={files} onSelect={setSelectedFile} />
 
-      <VideoPlayer filepath={selectedFile?.filepath} server={selectedServer}/>
+      {selectedFile && (
+        <VideoPlayer
+          videoId={selectedFile.id}
+          uploaded={selectedFile.uploaded}
+        />
+      )}
     </div>
   );
 }
