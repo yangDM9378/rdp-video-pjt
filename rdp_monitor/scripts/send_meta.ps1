@@ -6,7 +6,9 @@ function Send-MetaToApi {
 
     . "C:\rdp-video-pjt\rdp_monitor\scripts\common.ps1"
     $config = Get-Config
-    $ApiUrl = $config["METADATA_API_URL"]
+    $ApiBaseUrl = $config["API_BASE_URL"]
+    $ApiUrl = "$ApiBaseUrl/rdp/metadata"
+    
 
     if (!(Test-Path $MetaFile)) { return $false }
 
@@ -38,7 +40,7 @@ function Send-MetaToApi {
             New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
         } 
         $msg = "[{0}] META SEND FAIL: {1}" -f `
-            (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $_.Exception.Message
+        (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $_.Exception.Message
         Add-Content -Path "$LogDir\meta_send_error.log" -Value $msg
     }
 

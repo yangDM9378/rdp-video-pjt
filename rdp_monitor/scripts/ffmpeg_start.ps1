@@ -58,6 +58,7 @@ $meta = @{
     size       = 0
     duration   = 0
     uploaded   = 0
+    upload_time  = $null
 }
 
 $meta | ConvertTo-Json -Depth 5 | Out-File $MetaPath -Encoding utf8

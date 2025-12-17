@@ -2,13 +2,15 @@
 $config = Get-Config
 
 $RecordDir = $config["RECORD_DIR"]
-$MoveRootDir = $config["MOVE_RECORD_DIR"] 
+$MoveRootDir = $config["MOVE_RECORD_DIR"]
 $ServerName = $config["SERVER_NAME"]
 $LogDir = $config["LOG_DIR"]
 
 $SftpHost = $config["SFTP_HOST"]
 $SftpUser = $config["SFTP_USER"]
 $SftpKey = $config["SFTP_KEY"]
+
+$ApiBaseUrl = $config["API_BASE_URL"]
 
 $Today = Get-Date -Format "yyyyMMdd"
 
@@ -60,7 +62,6 @@ bye
 
 Log "===== TRANSFER START ====="
 
-
 $DateDirs = Get-ChildItem $RecordDir -Directory |
 Where-Object {
     $_.Name -match '^\d{8}$' -and $_.Name -lt $Today
@@ -95,9 +96,7 @@ foreach ($dateDir in $DateDirs) {
             }
 
             $RemoteUserDir = "$MoveRootDir/$ServerName/$Date/$($userDir.Name)"
-
             Ensure-SftpDir $RemoteUserDir
-
             $SftpCmd = @"
 cd $RemoteUserDir
 put "$webmPath"
@@ -113,27 +112,41 @@ bye
 
             Remove-Item $TmpScript -Force -ErrorAction SilentlyContinue
 
-            if ($ExitCode -eq 0) {
-
-                Remove-Item $webmPath -Force
-                Log "[OK] transferred & removed: $($webm.Name)"
-
-                if (Test-Path $jsonPath) {
-                    Remove-Item $jsonPath -Force
-                    Log "[OK] removed json: $(Split-Path $jsonPath -Leaf)"
-                }
-
-            }
-            else {
+            if ($ExitCode -ne 0) {
                 Log "[FAIL] transfer failed: $($webm.Name)"
                 continue
+            }
+
+            try {
+                Invoke-RestMethod `
+                    -Uri "$ApiBaseUrl/rdp/video/uploaded" `
+                    -Method POST `
+                    -ContentType "application/json" `
+                    -Body (@{
+                        server   = $ServerName
+                        date     = $Date
+                        filename = $webm.Name
+                    } | ConvertTo-Json)
+
+                Log "[API] uploaded flag updated: $($webm.Name)"
+            }
+            catch {
+                Log "[API-FAIL] uploaded update failed: $($webm.Name)"
+                continue
+            }
+
+            Remove-Item $webmPath -Force
+            Log "[OK] transferred & removed: $($webm.Name)"
+
+            if (Test-Path $jsonPath) {
+                Remove-Item $jsonPath -Force
+                Log "[OK] removed json: $(Split-Path $jsonPath -Leaf)"
             }
         }
 
         $RemoteUserDir = "$MoveRootDir/$ServerName/$Date/$($userDir.Name)"
         Remove-SftpDirIfEmpty $RemoteUserDir
 
-        # 로컬 사용자 폴더 정리
         if ((Get-ChildItem $userDir.FullName -Force).Count -eq 0) {
             Remove-Item $userDir.FullName -Force
             Log "[CLEANUP] removed empty local user dir: $($userDir.Name)"
