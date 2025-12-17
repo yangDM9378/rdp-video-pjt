@@ -97,8 +97,7 @@ def stream_today_video(video_id):
         SELECT
             v.server_name,
             s.ip AS server_ip,
-            v.date,
-            v.filename,
+            v.filepath,
             v.uploaded
         FROM rdp_video v
         JOIN rdp_server s
@@ -115,14 +114,15 @@ def stream_today_video(video_id):
         return jsonify({"error": "invalid request"}), 400
 
     server_ip = video["server_ip"]
-    filename  = video["filename"]
 
-    raw_date = video["date"]
-    date = raw_date.replace("-", "")
+    try:
+        rel_path = video["filepath"].split("/", 1)[1]
+    except IndexError:
+        return jsonify({"error": "invalid filepath"}), 500
 
     windows_stream_url = (
         f"http://{server_ip}:9180/stream"
-        f"?file={filename}&date={date}"
+        f"?path={rel_path}"
     )
 
     try:
@@ -155,13 +155,11 @@ def play_uploaded_video(video_id):
         return jsonify({"error": "not found"}), 404
 
     video = rows[0]
-
     if video["uploaded"] != 1:
         return jsonify({"error": "invalid request"}), 400
 
-    base_dir = "C:/var/lib/data_platform/rdp_monitor/record"
+    base_dir = "C:/var/lib/rdp_monitor/record"
     full_path = os.path.normpath(os.path.join(base_dir, video["filepath"]))
-
     if not full_path.startswith(os.path.abspath(base_dir)):
         return jsonify({"error": "invalid path"}), 403
 
@@ -184,7 +182,6 @@ def mark_video_uploaded():
     date = f"{date_raw[0:4]}-{date_raw[4:6]}-{date_raw[6:8]}"
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
     rdpDB_query("""
         UPDATE rdp_video
         SET uploaded = 1,
@@ -193,5 +190,4 @@ def mark_video_uploaded():
           AND date = ?
           AND filename = ?
     """, (now, server, date, filename))
-
     return jsonify({"result": "ok"})
