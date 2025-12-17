@@ -1,3 +1,4 @@
+import requests
 from flask import Blueprint, request, jsonify, send_file, Response, stream_with_context
 import os
 from datetime import datetime
@@ -120,7 +121,7 @@ def stream_today_video(video_id):
     date = raw_date.replace("-", "")
 
     windows_stream_url = (
-        f"http://{server_ip}:8080/stream"
+        f"http://{server_ip}:9180/stream"
         f"?file={filename}&date={date}"
     )
 
@@ -161,7 +162,6 @@ def play_uploaded_video(video_id):
     base_dir = "C:/var/lib/data_platform/rdp_monitor/record"
     full_path = os.path.normpath(os.path.join(base_dir, video["filepath"]))
 
-    # 🔒 base_dir 탈출 방지
     if not full_path.startswith(os.path.abspath(base_dir)):
         return jsonify({"error": "invalid path"}), 403
 
@@ -169,3 +169,29 @@ def play_uploaded_video(video_id):
         return jsonify({"error": "file not found"}), 404
 
     return send_file(full_path, mimetype="video/webm")
+
+@rdp_monitor_api.route("/video/uploaded", methods=["POST"])
+def mark_video_uploaded():
+    data = request.json
+
+    server   = data.get("server")
+    date_raw = data.get("date")
+    filename = data.get("filename")
+
+    if not server or not date_raw or not filename:
+        return jsonify({"error": "invalid params"}), 400
+
+    date = f"{date_raw[0:4]}-{date_raw[4:6]}-{date_raw[6:8]}"
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    rdpDB_query("""
+        UPDATE rdp_video
+        SET uploaded = 1,
+            upload_time = ?
+        WHERE server_name = ?
+          AND date = ?
+          AND filename = ?
+    """, (now, server, date, filename))
+
+    return jsonify({"result": "ok"})
